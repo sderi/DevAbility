@@ -8,19 +8,10 @@ library(GGally)
 library(DT)
 library(gridExtra)
 library(ggfortify)
-library(seplyr)
+library(grid)
 
+source("appFuncs.R")
 
-
-
-dataw <- read.csv("data/tsCD38allDatav2.csv")
-
-cleandata <- function(data, name, var){
-  name <- filter(data, Region == var)
-  name <- name[colSums(!is.na(name)) >0]
-  name[is.na(name)] <- 0
-  return(name)
-}
 
 datawcd28 <- cleandata(dataw, datawcd28, "CD28")
 datawcd38 <- cleandata(dataw, datawcd38, "CD38")
@@ -31,33 +22,33 @@ datawconstant <- cleandata(dataw, datawconstant, "Constant")
 
 ui <- fluidPage(
   navbarPage("Characterization Developability Analytics - tsCD38 ", inverse=TRUE,
-             tabPanel("Summary",
+             tabPanel("Modifications",
                       fluidRow(
-                          sidebarLayout(
-                            sidebarPanel(width=2,
-                                         h4("Select attribute to plot:"),
-                                         selectInput('chattrPlot', "Select Attribute",
-                                                     choices=colnames(dataw[5:length(colnames(dataw))]),
-                                                     selected = dataw[5]),
-                                         radioButtons('yscale', "Choose y-scale",
-                                                      choices = c(
-                                                        "Normalized" = "fixed",
-                                                        "Individual" = "free_y"
-                                                      )),
-                                         h4("Adjust font sizes"),
-                                         numericInput("titlefont", "Title", value = 20, width = "60%"),
-                                         numericInput("striptextfont", "Strip", value = 18, width = "60%"),
-                                         numericInput("xtextfont", "X Labels", value = 12, width = "60%"),
-                                         numericInput("ytextfont", "Y Labels", value = 16, width = "60%"),
-                                         numericInput("legendtitlefont", "Legend Title", value = 18, width = "60%"),
-                                         numericInput("legendtextfont", "Legend Text", value = 18, width = "60%")
-                            ),
-                            mainPanel(width = 9, plotOutput('attrPlot', height="550px"))
-                          )
-                                  )
-                     
+                        sidebarLayout(
+                          sidebarPanel(width=2,
+                                       h4("Select attribute to plot:"),
+                                       selectInput('chattrPlot', "Select Attribute",
+                                                   choices=colnames(dataw[5:length(colnames(dataw))]),
+                                                   selected = dataw[5]),
+                                       radioButtons('yscale', "Choose y-scale",
+                                                    choices = c(
+                                                      "Normalized" = "fixed",
+                                                      "Individual" = "free_y"
+                                                    )),
+                                       h4("Adjust font sizes"),
+                                       numericInput("titlefont", "Title", value = 20, width = "60%"),
+                                       numericInput("striptextfont", "Strip", value = 18, width = "60%"),
+                                       numericInput("xtextfont", "X Labels", value = 12, width = "60%"),
+                                       numericInput("ytextfont", "Y Labels", value = 16, width = "60%"),
+                                       numericInput("legendtitlefont", "Legend Title", value = 18, width = "60%"),
+                                       numericInput("legendtextfont", "Legend Text", value = 18, width = "60%")
+                          ),
+                          mainPanel(width = 9, plotOutput('attrPlot', height="550px"))
+                        )
+                      )
+                      
              ),
-            
+             
              tabPanel("Correlation analysis",
                       fluidRow(
                         sidebarLayout(
@@ -67,7 +58,7 @@ ui <- fluidPage(
                                                       "CD28" = "CD28",
                                                       "CD38" = "CD38",
                                                       "CD3" = "CD3")
-                                                    ),
+                                       ),
                                        br(),
                                        checkboxGroupInput('constructs', "Select constructs to include in correlation",
                                                           choices = as.vector(unique(dataw$Construct))),
@@ -84,76 +75,120 @@ ui <- fluidPage(
                           mainPanel(h2("Correlation matrix plot"),
                                     h4("Wait for plot to load after submitting"),
                                     p(style ="color:red", "This may take time to run depending on how many varialbes you are comparing - please be patient"),
-                            plotOutput('corPlot', height = "800px", width = "100%")
-                            )
-                        )
+                                    plotOutput('corPlot', height = "800px", width = "100%")
+                          )
+                          )
                       ),
-                    br(),
-                    fluidRow(
-                      tabsetPanel(type="pills",
-                        tabPanel("CD28",
-                                 sidebarLayout(
-                                   sidebarPanel(width = 3,
-                                                h2("CD28 Modifications"),
-                                                h3("Variable Plotting"),
-                                                selectInput('x28', "X variable",
-                                                            choices = colnames(datawcd28[5:length(colnames(datawcd28))]),
-                                                            selected = colnames(datawcd28[5])),
-                                                selectInput('y28', "Y variable",
-                                                            choices = colnames(datawcd28[5:length(colnames(datawcd28))]),
-                                                            selected = colnames(datawcd28[6]))
-                                   ),
-                                   mainPanel(plotlyOutput('varPlot28', height="550px"))
-                                 )
-                        ),
-                        tabPanel("CD38",
-                                 sidebarLayout(
-                                   sidebarPanel(width = 3,
-                                                h2("CD38 Modifications"),
-                                                h3("Variable Plotting"),
-                                                selectInput('x38', "X variable",
-                                                            choices = colnames(datawcd38[5:length(colnames(datawcd38))]),
-                                                            selected = colnames(datawcd38[5])),
-                                                selectInput('y38', "Y variable",
-                                                            choices = colnames(datawcd38[5:length(colnames(datawcd38))]),
-                                                            selected = colnames(datawcd38[6]))
-                                   ),
-                                   mainPanel(plotlyOutput('varPlot38', height="550px"))
-                                 )
-                        ),
-                        tabPanel("CD3",
-                                 sidebarLayout(
-                                   sidebarPanel(width = 3,
-                                                h2("CD3 Modifications"),
-                                                h3("Variable Plotting"),
-                                                selectInput('x3', "X variable",
-                                                            choices = colnames(datawcd3[5:length(colnames(datawcd3))]),
-                                                            selected = colnames(datawcd3[5])),
-                                                selectInput('y3', "Y variable",
-                                                            choices = colnames(datawcd3[5:length(colnames(datawcd3))]),
-                                                            selected = colnames(datawcd3[6]))
-                                   ),
-                                   mainPanel(plotlyOutput('varPlot3', height="550px"))
-                                 )
-                        ),
-                        tabPanel("Constant",
-                                 sidebarLayout(
-                                   sidebarPanel(width = 3,
-                                                h2("Constant Modifications"),
-                                                h3("Variable Plotting"),
-                                                selectInput('xConstant', "X variable",
-                                                            choices = colnames(datawconstant[5:length(colnames(datawconstant))]),
-                                                            selected = colnames(datawconstant[5])),
-                                                selectInput('yConstant', "Y variable",
-                                                            choices = colnames(datawconstant[5:length(colnames(datawconstant))]),
-                                                            selected = colnames(datawconstant[6]))
-                                   ),
-                                   mainPanel(plotlyOutput('varPlotConstant', height="550px"))
-                                 )
-                        )
-                      ))
+                      br(),
+                      fluidRow(
+                        tabsetPanel(type="pills",
+                                    tabPanel("CD28",
+                                             sidebarLayout(
+                                               sidebarPanel(width = 3,
+                                                            h2("CD28 Modifications"),
+                                                            h3("Variable Plotting"),
+                                                            selectInput('x28', "X variable",
+                                                                        choices = colnames(datawcd28[5:length(colnames(datawcd28))]),
+                                                                        selected = colnames(datawcd28[5])),
+                                                            selectInput('y28', "Y variable",
+                                                                        choices = colnames(datawcd28[5:length(colnames(datawcd28))]),
+                                                                        selected = colnames(datawcd28[6]))
+                                               ),
+                                               mainPanel(plotlyOutput('varPlot28', height="550px"))
+                                             )
+                                    ),
+                                    tabPanel("CD38",
+                                             sidebarLayout(
+                                               sidebarPanel(width = 3,
+                                                            h2("CD38 Modifications"),
+                                                            h3("Variable Plotting"),
+                                                            selectInput('x38', "X variable",
+                                                                        choices = colnames(datawcd38[5:length(colnames(datawcd38))]),
+                                                                        selected = colnames(datawcd38[5])),
+                                                            selectInput('y38', "Y variable",
+                                                                        choices = colnames(datawcd38[5:length(colnames(datawcd38))]),
+                                                                        selected = colnames(datawcd38[6]))
+                                               ),
+                                               mainPanel(plotlyOutput('varPlot38', height="550px"))
+                                             )
+                                    ),
+                                    tabPanel("CD3",
+                                             sidebarLayout(
+                                               sidebarPanel(width = 3,
+                                                            h2("CD3 Modifications"),
+                                                            h3("Variable Plotting"),
+                                                            selectInput('x3', "X variable",
+                                                                        choices = colnames(datawcd3[5:length(colnames(datawcd3))]),
+                                                                        selected = colnames(datawcd3[5])),
+                                                            selectInput('y3', "Y variable",
+                                                                        choices = colnames(datawcd3[5:length(colnames(datawcd3))]),
+                                                                        selected = colnames(datawcd3[6]))
+                                               ),
+                                               mainPanel(plotlyOutput('varPlot3', height="550px"))
+                                             )
+                                    ),
+                                    tabPanel("Constant",
+                                             sidebarLayout(
+                                               sidebarPanel(width = 3,
+                                                            h2("Constant Modifications"),
+                                                            h3("Variable Plotting"),
+                                                            selectInput('xConstant', "X variable",
+                                                                        choices = colnames(datawconstant[5:length(colnames(datawconstant))]),
+                                                                        selected = colnames(datawconstant[5])),
+                                                            selectInput('yConstant', "Y variable",
+                                                                        choices = colnames(datawconstant[5:length(colnames(datawconstant))]),
+                                                                        selected = colnames(datawconstant[6]))
+                                               ),
+                                               mainPanel(plotlyOutput('varPlotConstant', height="550px"))
+                                             )
+                                    )
+                        ))
                       ),
-             tabPanel("Linear Regression"),
+             navbarMenu("Linear Regression",
+                        tabPanel("Summary",
+                                 fluidRow(
+                                   sidebarLayout(
+                                     sidebarPanel(width = 2,
+                                                  h4("Changes plots and tables"),
+                                                  radioButtons('linregion', "Select Region",
+                                                               choices = unique(dataw$Region)),
+                                                  radioButtons('norm', "Select Data Transformation",
+                                                               choices = c(
+                                                                 "Raw" = 0,
+                                                                 "Log2" = 1
+                                                               ),
+                                                               selected = 0),
+                                                  br(), hr(),
+                                                  h4("Changes plots only"),
+                                                  selectInput('linmods', "Select Modifications",
+                                                              choices = colnames(dataw[5:length(colnames(dataw))])),
+                                                  h4("Change color scale"),
+                                                  radioButtons('direction', "Data Direction",
+                                                               choices = c(
+                                                                 "Increasing" = -1,
+                                                                 "Decreasing" = 1
+                                                               ),
+                                                               selected = -1)
+                                     ),
+                                     mainPanel(width = 10, plotOutput('linSum', height = "600px"))
+                                   )
+                                 ),
+                                 h2("Data tables"),
+                                 tabsetPanel(
+                                   tabPanel("Linear Regression",
+                                            br(),
+                                            downloadButton("downloadLinReg", "Download table below"),
+                                            br(), br(),
+                                            dataTableOutput("tableLinReg")),
+                                   tabPanel("Slopes R-squared",
+                                            br(),
+                                            downloadButton("downloadSR2", "Download table below"),
+                                            br(), br(),
+                                            dataTableOutput("tableSR2"))
+                                 )
+                        ),
+                        tabPanel("Heat maps")
+             ),
              tabPanel("PCA",
                       h1("PCA analysis"),
                       tags$hr(),
@@ -174,55 +209,55 @@ ui <- fluidPage(
                                        ),
                           mainPanel(plotlyOutput('pcaPlot', height="600px", width="100%")))
                       )
-               
-             ),
-             navbarMenu("Tables and plots",
-                          tabPanel("Data table",
-                                   h2("Data used for this analysis"),
-                                   h4("Click region below to view data"),
-                                   br(),
-                                   tags$style(HTML("
-                                                   .tabbable > .nav > li > a                  {background-color: black;  color:white}
-                                                   .tabbable > .nav > li[class=active]    > a {background-color: #4286f4; color:white}
-                                                   ")),
-                                   tabsetPanel(
-                                     tabPanel("CD28",
-                                              br(),
-                                              downloadButton("downloadCD28", "Download table below"),
-                                              br(),
-                                              br(),
-                                              dataTableOutput("table28")),
-                                     tabPanel("CD38",
-                                              br(),
-                                              downloadButton("downloadCD38", "Download table below"),
-                                              br(),
-                                              br(),
-                                              dataTableOutput("table38")),
-                                     tabPanel("CD3",
-                                              br(),
-                                              downloadButton("downloadCD3", "Download table below"),
-                                              br(),
-                                              br(),
-                                              dataTableOutput("table3")),
-                                     tabPanel("Constant",
-                                              br(),
-                                              downloadButton("downloadConstant", "Download table below"),
-                                              br(),
-                                              br(),
-                                              dataTableOutput("tableConstant")),
-                                     tabPanel("All",
-                                              br(),
-                                              downloadButton("downloadAll", "Download table below"),
-                                              br(),
-                                              br(),
-                                              dataTableOutput("tableAll"))
-                                   )),
-                          tabPanel("Plots by attribute",
-                                   tags$h2("Under construction"))
-             )
-             
-  )
-  
+                      
+),
+navbarMenu("Tables and plots",
+           tabPanel("Data table",
+                    h2("Data used for this analysis"),
+                    h4("Click region below to view data"),
+                    br(),
+                    tags$style(HTML("
+                                    .tabbable > .nav > li > a                  {background-color: black;  color:white}
+                                    .tabbable > .nav > li[class=active]    > a {background-color: #4286f4; color:white}
+                                    ")),
+                    tabsetPanel(
+                      tabPanel("CD28",
+                               br(),
+                               downloadButton("downloadCD28", "Download table below"),
+                               br(),
+                               br(),
+                               dataTableOutput("table28")),
+                      tabPanel("CD38",
+                               br(),
+                               downloadButton("downloadCD38", "Download table below"),
+                               br(),
+                               br(),
+                               dataTableOutput("table38")),
+                      tabPanel("CD3",
+                               br(),
+                               downloadButton("downloadCD3", "Download table below"),
+                               br(),
+                               br(),
+                               dataTableOutput("table3")),
+                      tabPanel("Constant",
+                               br(),
+                               downloadButton("downloadConstant", "Download table below"),
+                               br(),
+                               br(),
+                               dataTableOutput("tableConstant")),
+                      tabPanel("All",
+                               br(),
+                               downloadButton("downloadAll", "Download table below"),
+                               br(),
+                               br(),
+                               dataTableOutput("tableAll"))
+                    )),
+           tabPanel("Plots by attribute",
+                    tags$h2("Under construction"))
+                    )
+
+)
+
 )
 
 
@@ -247,7 +282,7 @@ server <- function(input, output) {
                   name = paste(Construct, ".", Time, ".", Buffer))
     row.names(dat) <- dat$name
     dat
-    })
+  })
   
   allpcadata <- mutate(dataw, name = paste(Construct, ".", Time, ".", Buffer, ".", Region))
   row.names(allpcadata) <- allpcadata$name
@@ -281,7 +316,7 @@ server <- function(input, output) {
       p <- autoplot(prcomp(alldims), data = allpcadata, colour="Buffer", label = TRUE, shape=FALSE, label.size=3.2) + 
         labs(title="PCA Analysis")+
         theme_dark() + pcaTheme
-        
+      
     } else {
       p <- autoplot(prcomp(pcadims()), data = pcadata(), colour="Buffer", label = TRUE, shape=FALSE, label.size=3.2) + 
         labs(title="PCA Analysis")+
@@ -345,8 +380,8 @@ server <- function(input, output) {
   
   cordata <- eventReactive(input$run, {
     cordat <- dataw %>%
-                filter(Region == input$corData &
-                       Construct %in% input$constructs)
+      filter(Region == input$corData &
+               Construct %in% input$constructs)
     cordat <- cordat[colSums(!is.na(cordat)) > 0]
     cordat[is.na(cordat)] <- 0
     cordat
@@ -355,7 +390,7 @@ server <- function(input, output) {
   output$corPlot <- renderPlot({
     ggpairs(
       cordata(), 5:length(colnames(cordata())), mapping = aes_string(colour="Buffer"),
-      upper = list(continuous = wrap("cor", size = 4, alignPercent = 1)),
+      upper = list(continuous = wrap("cor", size = 5, alignPercent = 1)),
       lower = list(continuous = wrap("points", size=3)), 
       diag = list(continuous = wrap(ggally_diagAxis,
                                     labelSize = 4,
@@ -364,7 +399,7 @@ server <- function(input, output) {
       showStrips = F
     ) + theme_bw(base_size = 12)
   })
-    
+  
   # cordata <- eventReactive(input$run, {
   #     cordat <- filter(dataw, Region == input$corData)
   #     cordat <- cordat[colSums(!is.na(cordat)) > 0]
@@ -381,6 +416,113 @@ server <- function(input, output) {
   #           ) +
   #     theme_bw()
   # })
+  lrTheme <- theme_linedraw() +
+    theme(
+      plot.title = element_text(size=16, face='bold'),
+      strip.background = element_rect(fill="#595959"),
+      panel.background = element_rect(fill="#f9f9f9"),
+      panel.grid.major = element_line(color="grey"),
+      panel.grid.minor = element_line(color="grey"),
+      axis.title.y = element_blank(),
+      axis.title.x = element_blank(),
+      axis.text.x = element_text(size=16, face='bold'),
+      axis.text.y = element_text(size=16, face='bold'),
+      strip.text.x = element_text(size=18, face='bold'),
+      legend.text = element_text(size=16, face='bold'),
+      legend.title = element_text(size=16, face='bold'),
+      legend.position = "top"
+    )
+  
+  hmTheme <- theme_linedraw() +
+    theme(
+      plot.title = element_text(size=16, face='bold'),
+      axis.title.y = element_blank(),
+      axis.title.x = element_blank(),
+      axis.text.x = element_text(size=12, face='bold'),
+      axis.text.y = element_text(size=16, face='bold'),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      legend.text = element_text(size=14, face='bold'),
+      legend.title = element_text(size=14, face='bold')
+    )
+  
+  linregdf <- reactive({
+    df <- cleanDF(dataw, input$linregion, input$norm)
+    df
+  })
+  
+  hmdf <- reactive({
+    df <- linReg(dataw, input$linregion, input$norm)
+    df <- filter(df, Attribute == input$linmods)
+    df
+  })
+  
+  output$linSum <- renderPlot({
+    
+    dataw$Time <- factor(dataw$Time)
+    bp <- ggplot(dataw, aes_string(x = "Construct", y = input$linmods, fill = "Time")) +
+      geom_bar(stat = "identity", position = position_dodge(), color = "black") +
+      geom_hline(yintercept = 0, color="black") +
+      labs(x=NULL, title= "Raw Data") +
+      lrTheme
+    barp <- bp + facet_wrap(~Buffer)
+    
+    print(head(linregdf()))
+    lr <- ggplot(linregdf(), aes_string("Time", input$linmods, color = "Construct")) +
+      geom_point(size=2.0) +
+      geom_smooth(method = "lm", se =F, size = 1.2) +
+      labs(title="Linear Regression", color = NULL) +
+      lrTheme
+    lrp <- lr + facet_grid(. ~ Buffer)
+    
+    hp <- ggplot(hmdf(), aes(Construct, Buffer)) + 
+      geom_tile(aes(fill = Slope), color = "black") +
+      geom_text(aes(label=paste("Slope: ",round(Slope,3))), fontface='bold', size = 6, show.legend = F) +
+      geom_text(aes(label=paste("\n" , "\n" , "R2: ", round(R.squared,3))), fontface='bold', size = 6, show.legend = F) +
+      scale_fill_distiller(palette = "Spectral", direction = input$direction) +
+      labs(title="Heat Map", x=NULL, y=NULL) +
+      hmTheme
+    
+    grid.arrange(lrp, hp,
+                 #arrangeGrob(barp, lrp, nrow = 2), hp, 
+                 ncol = 2,
+                 top=textGrob(paste(input$linmods, "\n"),gp=gpar(fontsize=36,font=2)))
+    
+  })
+  
+  output$tableLinReg <- DT::renderDataTable(linregdf(), options = list(
+    pageLength=50
+  ))
+  
+  output$downloadLinReg <- downloadHandler(
+    filename = function() {
+      paste("LinearRegression", ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(linregdf(), file, row.names = FALSE)
+    }
+  )
+  
+  hmtdf <- reactive({
+    df <- linReg(dataw, input$linregion, input$norm)
+    df$Slope <- format(round(df$Slope, 4), nsmall=4)
+    df$R.squared <- format(round(df$R.squared, 4), nsmall=4)
+    df
+  })
+  
+  output$tableSR2 <- DT::renderDataTable(hmtdf(), options = list(
+    autoWidth = FALSE,
+    pageLength=50
+  ))
+  
+  output$downloadSR2 <- downloadHandler(
+    filename = function() {
+      paste("LinearRegression", ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(hmtdf(), file, row.names = FALSE)
+    }
+  )
   
   output$tableAll <- DT::renderDataTable(dataw, options = list(
     pageLength=50
