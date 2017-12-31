@@ -10,7 +10,7 @@ library(gridExtra)
 library(ggfortify)
 library(grid)
 
-source("appFuncs.R")
+source("funcsApp.R")
 
 
 datawcd28 <- cleandata(dataw, datawcd28, "CD28")
@@ -174,6 +174,8 @@ ui <- fluidPage(
                                    )
                                  ),
                                  h2("Data tables"),
+                                 textInput('textRegion', label = NULL),
+                                 textInput('textData', label = NULL),
                                  tabsetPanel(
                                    tabPanel("Linear Regression",
                                             br(),
@@ -184,7 +186,7 @@ ui <- fluidPage(
                                             br(),
                                             downloadButton("downloadSR2", "Download table below"),
                                             br(), br(),
-                                            dataTableOutput("tableSR2"))
+                                            div(dataTableOutput("tableSR2"), style = 'width:900px'))
                                  )
                         ),
                         tabPanel("Heat maps")
@@ -261,7 +263,7 @@ navbarMenu("Tables and plots",
 )
 
 
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   mypltTheme <- theme_minimal() +
     theme(
@@ -488,6 +490,20 @@ server <- function(input, output) {
                  ncol = 2,
                  top=textGrob(paste(input$linmods, "\n"),gp=gpar(fontsize=36,font=2)))
     
+  })
+  
+  observe({
+    if (input$norm == 0){
+      dtext <- "Raw"
+    } else if (input$norm == 1) {
+      dtext <- "Log2 Normalized"
+    } else
+      dtext <- "unknown data type"
+    
+    regText <- input$linregion
+    
+    updateTextInput(session, "textRegion", value = paste("Selected region:", regText))
+    updateTextInput(session, 'textData', value = paste("Data type selected:", dtext))
   })
   
   output$tableLinReg <- DT::renderDataTable(linregdf(), options = list(
