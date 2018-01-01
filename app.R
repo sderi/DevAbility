@@ -12,11 +12,13 @@ library(grid)
 
 source("funcsApp.R")
 
+molRegions <- as.character(unique(dataw$Region))
+molConstructs <- as.character(unique(dataw$Construct))
 
-datawcd28 <- cleandata(dataw, datawcd28, "CD28")
-datawcd38 <- cleandata(dataw, datawcd38, "CD38")
-datawcd3 <- cleandata(dataw, datawcd3, "CD3")
-datawconstant <- cleandata(dataw, datawconstant, "Constant")
+datawcd28 <- cleandata(dataw, datawcd28, molRegions[1])
+datawcd38 <- cleandata(dataw, datawcd38, molRegions[2])
+datawcd3 <- cleandata(dataw, datawcd3, molRegions[3])
+datawconstant <- cleandata(dataw, datawconstant, molRegions[4])
 
 
 
@@ -54,10 +56,7 @@ ui <- fluidPage(
                         sidebarLayout(
                           sidebarPanel(width = 2,
                                        radioButtons('corData', "Select Region",
-                                                    choices = c(
-                                                      "CD28" = "CD28",
-                                                      "CD38" = "CD38",
-                                                      "CD3" = "CD3")
+                                                    choices = as.vector(unique(dataw$Region))
                                        ),
                                        br(),
                                        checkboxGroupInput('constructs', "Select constructs to include in correlation",
@@ -82,10 +81,10 @@ ui <- fluidPage(
                       br(),
                       fluidRow(
                         tabsetPanel(type="pills",
-                                    tabPanel("CD28",
+                                    tabPanel(molRegions[1],
                                              sidebarLayout(
                                                sidebarPanel(width = 3,
-                                                            h2("CD28 Modifications"),
+                                                            h2(paste(molRegions[1], "Modifications")),
                                                             h3("Variable Plotting"),
                                                             selectInput('x28', "X variable",
                                                                         choices = colnames(datawcd28[5:length(colnames(datawcd28))]),
@@ -97,10 +96,10 @@ ui <- fluidPage(
                                                mainPanel(plotlyOutput('varPlot28', height="550px"))
                                              )
                                     ),
-                                    tabPanel("CD38",
+                                    tabPanel(molRegions[2],
                                              sidebarLayout(
                                                sidebarPanel(width = 3,
-                                                            h2("CD38 Modifications"),
+                                                            h2(paste(molRegions[2],"Modifications")),
                                                             h3("Variable Plotting"),
                                                             selectInput('x38', "X variable",
                                                                         choices = colnames(datawcd38[5:length(colnames(datawcd38))]),
@@ -112,10 +111,10 @@ ui <- fluidPage(
                                                mainPanel(plotlyOutput('varPlot38', height="550px"))
                                              )
                                     ),
-                                    tabPanel("CD3",
+                                    tabPanel(molRegions[3],
                                              sidebarLayout(
                                                sidebarPanel(width = 3,
-                                                            h2("CD3 Modifications"),
+                                                            h2(paste(molRegions[3], "Modifications")),
                                                             h3("Variable Plotting"),
                                                             selectInput('x3', "X variable",
                                                                         choices = colnames(datawcd3[5:length(colnames(datawcd3))]),
@@ -127,10 +126,10 @@ ui <- fluidPage(
                                                mainPanel(plotlyOutput('varPlot3', height="550px"))
                                              )
                                     ),
-                                    tabPanel("Constant",
+                                    tabPanel(molRegions[4],
                                              sidebarLayout(
                                                sidebarPanel(width = 3,
-                                                            h2("Constant Modifications"),
+                                                            h2(paste(molRegions[4], "Modifications")),
                                                             h3("Variable Plotting"),
                                                             selectInput('xConstant', "X variable",
                                                                         choices = colnames(datawconstant[5:length(colnames(datawconstant))]),
@@ -203,10 +202,7 @@ ui <- fluidPage(
                                          All empty data will be replaced with a numeric zero."),
                                        radioButtons('pcachoices', "Select Region for PCA",
                                                     choices = c(
-                                                      "CD28" = "CD28",
-                                                      "CD38" = "CD38",
-                                                      "CD3" = "CD3",
-                                                      "Constant" = "Constant",
+                                                      molRegions,
                                                       "All" = "All"))
                                        ),
                           mainPanel(plotlyOutput('pcaPlot', height="600px", width="100%")))
@@ -223,30 +219,30 @@ navbarMenu("Tables and plots",
                                     .tabbable > .nav > li[class=active]    > a {background-color: #4286f4; color:white}
                                     ")),
                     tabsetPanel(
-                      tabPanel("CD28",
+                      tabPanel(molRegions[1],
                                br(),
-                               downloadButton("downloadCD28", "Download table below"),
-                               br(),
-                               br(),
-                               dataTableOutput("table28")),
-                      tabPanel("CD38",
-                               br(),
-                               downloadButton("downloadCD38", "Download table below"),
+                               downloadButton('dtreg1', "Download table below"),
                                br(),
                                br(),
-                               dataTableOutput("table38")),
-                      tabPanel("CD3",
+                               dataTableOutput("tablereg1")),
+                      tabPanel(molRegions[2],
                                br(),
-                               downloadButton("downloadCD3", "Download table below"),
-                               br(),
-                               br(),
-                               dataTableOutput("table3")),
-                      tabPanel("Constant",
-                               br(),
-                               downloadButton("downloadConstant", "Download table below"),
+                               downloadButton("dtreg2", "Download table below"),
                                br(),
                                br(),
-                               dataTableOutput("tableConstant")),
+                               dataTableOutput("tablereg2")),
+                      tabPanel(molRegions[3],
+                               br(),
+                               downloadButton("dtreg3", "Download table below"),
+                               br(),
+                               br(),
+                               dataTableOutput("tablereg3")),
+                      tabPanel(molRegions[4],
+                               br(),
+                               downloadButton("dtreg4", "Download table below"),
+                               br(),
+                               br(),
+                               dataTableOutput("tablereg4")),
                       tabPanel("All",
                                br(),
                                downloadButton("downloadAll", "Download table below"),
@@ -543,51 +539,51 @@ server <- function(input, output, session) {
   output$tableAll <- DT::renderDataTable(dataw, options = list(
     pageLength=50
   ))
-  output$table28 <- DT::renderDataTable(datawcd28, options = list(
+  output$tablereg1 <- DT::renderDataTable(datawcd28, options = list(
     pageLength=50
   ))
-  output$table38 <- DT::renderDataTable(datawcd38, options = list(
+  output$tablereg2 <- DT::renderDataTable(datawcd38, options = list(
     pageLength=50
   ))
-  output$table3 <- DT::renderDataTable(datawcd3, options = list(
+  output$tablereg3 <- DT::renderDataTable(datawcd3, options = list(
     pageLength=50
   ))
-  output$tableConstant <- DT::renderDataTable(datawconstant, options = list(
+  output$tablereg4 <- DT::renderDataTable(datawconstant, options = list(
     pageLength=50
   ))
   
-  output$downloadCD28 <- downloadHandler(
+  output$dtreg1 <- downloadHandler(
     filename = function() {
-      paste("CD28data", ".csv", sep = "")
+      paste(molRegions[1], "data", ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(datawcd28, file, row.names = FALSE)
+      write.csv(paste("download", molRegions[1], sep = "_"), file, row.names = FALSE)
     }
   )
   
-  output$downloadCD38 <- downloadHandler(
+  output$dtreg2 <- downloadHandler(
     filename = function() {
-      paste("CD38data", ".csv", sep = "")
+      paste(molRegions[2], "data", ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(datawcd38, file, row.names = FALSE)
+      write.csv(paste("download", molRegions[2], sep = "_"), file, row.names = FALSE)
     }
   )
   
-  output$downloadCD3 <- downloadHandler(
+  output$dtreg3 <- downloadHandler(
     filename = function() {
-      paste("CD3data", ".csv", sep = "")
+      paste(molRegions[3], "data", ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(datawcd3, file, row.names = FALSE)
+      write.csv(paste("download", molRegions[3], sep = "_"), file, row.names = FALSE)
     }
   )
-  output$downloadConstant <- downloadHandler(
+  output$dtreg4 <- downloadHandler(
     filename = function() {
-      paste("Constantdata", ".csv", sep = "")
+      paste(molRegions[4], "data", ".csv", sep = "")
     },
     content = function(file) {
-      write.csv(datawconstant, file, row.names = FALSE)
+      write.csv(paste("download", molRegions[4], sep = "_"), file, row.names = FALSE)
     }
   )
   output$downloadAll <- downloadHandler(
